@@ -1,0 +1,1145 @@
+###########################
+## Mapfile for Road Classifications using the U.S. Census Tiger street centerline schema.
+###########################
+
+## Compatible with :
+##   MapServer V6.4.2
+##   Postgres V9.5 / PostGIS 2.2.2
+
+## License Summary
+##    MIT based license.
+
+## License Text
+##    Copyright (c) 2018, Bob Basques
+
+## Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+## files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy,
+## modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the 
+## Software is furnished to do so, subject to the following conditions:
+
+## The above copyright notice and this permission notice shall be included in all copies or substantial portions of the 
+## Software.
+
+## THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+## WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR 
+## COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+## ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+###########################
+##  Road classifications
+###########################
+
+## Feature class codes (f_class) are generalized versions of the U.S. census bureau standards. Namely: 
+##    
+##   Interstates A10
+##   Interstate HOV lanes A15
+##   US highways A20 
+##   State highways A25
+##   County Roads A30
+##   City Streets A40
+##   Ramps and Loops A63
+##   Service Drives A64
+##   Private Roads A66
+##   Dormitory Walkways A71
+##   Restricted Access A98
+
+##                 
+
+
+MAP
+
+	EXTENT 332000 -18000 678000 328000
+	## Data is in Ramsey County, Mn. coordinate system
+
+
+  	STATUS ON
+
+	LEGEND
+		KEYSIZE 40 10
+	END
+
+	WEB
+		METADATA
+			'ows_title' 'STPGIS_CENTERLINES'
+			'ows_srs' 'EPSG:200068 EPSG:26915 EPSG:4326 EPSG:900913 EPSG:3857'
+			#'ows_extent' '540000 135000 600000 175000'
+			'ows_enable_request' '*'
+      			"gml_include_items" "all" ## Optional (serves all attributes for layer)
+			'wms_feature_info_mime_type' 'text/html'
+		END
+	END
+
+	#PROJECTION
+		#"init=epsg:200068"
+	#END
+
+#######################
+####  Linework 
+#######################
+
+	LAYER
+
+		#DEBUG 5
+
+    		NAME 'stpgis_centerlines'
+    		TYPE LINE
+		STATUS DEFAULT
+
+		#PROJECTION
+			#"init=epsg:200068" 
+				## Ramsey County Local, custom EPSG code.
+		#END
+
+		#METADATA
+			#'ows_title' 'STPGIS_CENTERLINES'
+			#'ows_srs' 'EPSG:200068 EPSG:26915 EPSG:4326 EPSG:900913 EPSG:3857'
+      			#"gml_include_items" "all" ## Optional (serves all attributes for layer)
+			#'ows_enable_request' '*'
+    			#"qstring_validation_pattern" "."
+		#END
+
+		CONNECTIONTYPE POSTGIS
+
+		INCLUDE "../../../../conf/spatial_db/connection_compass.inc"
+		## Include file contains only the Postgres CONNECTION string, Database Name, User, Password, etc.
+
+		DATA "wkb_geometry from (select 
+						objectid,
+						cmmsparent, -- used in TEMPLATE
+						-- cmmsid,
+						-- l_f_add,
+						-- r_f_add,
+						-- l_t_add,
+						-- r_t_add,
+						streetall, -- used in TEMPLATE
+						f_xstreet, -- used in TEMPLATE
+						t_xstreet, -- used in TEMPLATE
+						-- msa_route,
+						-- ownership,
+						-- maintained,
+						-- stp_class,
+						-- rowclass,
+						-- speed_lim,
+						-- length_ft,
+						-- base,
+						-- surface,
+						-- parking_mi,
+						-- lane_mi,
+						-- oneway,
+						-- cmmschgreq,
+						-- streetname,
+						-- type,
+						-- sufdir,
+						hwy_numb,
+						f_class,
+						-- cencty_l,
+						-- cenmun_l,
+						-- censt_r,
+						-- cencty_r,
+						-- cenmun_r,
+						-- gnis_l,
+						-- gnis_r,
+						-- fips5_l,
+						-- fips5_r,
+						-- zip5_l,
+						-- zip5_r,
+						-- alt_nam1,
+						-- alt_nam2,
+						-- created_user,
+						-- created_date,
+						-- last_edited_user,
+						-- last_edited_date,
+						wkb_geometry
+      			from stpgis.stpaul_streetcenterline) as subquery using unique objectid using srid=200068"
+
+
+    		CLASSITEM 'f_class'
+    		LABELITEM 'streetall'
+
+#######
+#	A64 A66 A71 A73 A74 A98
+#######
+
+    		CLASS
+			#NAME 'Other Roads'
+      			EXPRESSION /A64|A66|A71|A73|A74|A98/ 
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+      				WIDTH 2
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 5000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 5000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+      				WIDTH 1
+        			COLOR 254 254 254
+      			END
+    		END
+
+#######
+#	A40
+#######
+
+    		CLASS
+			NAME 'Local Roads'
+      			EXPRESSION 'A40' # Local Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 250 250 250
+       				COLOR 28 28 28
+       				MINDISTANCE 250
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      			END
+
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 10000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 10000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 15000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 15000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 1
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			WIDTH 2
+				COLOR 175 175 175
+      				MAXSCALEDENOM 25001
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 25002
+        			WIDTH 1
+				COLOR 200 200 200
+      				MAXSCALEDENOM 160000
+      			END
+    		END
+
+#######
+#	A30
+#######
+    
+    		CLASS
+      			NAME 'County Road'
+      			EXPRESSION 'A30' # State Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			#OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'
+        			STYLE
+          				SYMBOL 'state_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'state_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+
+      			LABEL	## Street name label
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 10
+       				OUTLINECOLOR 255 251 115  # Same as line work color
+       				COLOR 0 0 0
+       				MINDISTANCE 200
+       				MINFEATURESIZE 10
+       				PARTIALS FALSE
+      			END
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 6
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 3
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A25
+#######
+    		CLASS
+      			NAME 'MN Highway'
+      			EXPRESSION 'A25' # MN Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the 
+							## bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'mn_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'mn_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 10
+       				OUTLINECOLOR 255 251 115  # Same as line work color
+       				COLOR 0 0 0
+       				MINDISTANCE 300
+       				MINFEATURESIZE 10
+       				#OFFSET -1 0
+       				PARTIALS FALSE
+      			END
+
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 8
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 6
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 3
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A74
+#######
+
+    		CLASS
+      			#NAME 'Park Road'
+      			EXPRESSION 'A74' # Park Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 175 175 175
+       				OUTLINEWIDTH 1
+       				COLOR 28 28 28
+       				MINDISTANCE 75
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      				MAXSCALEDENOM 10000
+      			END
+    		END
+
+#######
+#	A66
+#######
+
+    		CLASS
+      			#NAME 'Private Road'
+      			EXPRESSION 'A66' # Private Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 175 175 175
+       				OUTLINEWIDTH 1
+       				COLOR 28 28 28
+       				MINDISTANCE 75
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      				MAXSCALEDENOM 10000
+      			END
+    		END
+#######
+#	A20
+#######
+    
+    		CLASS
+      			NAME 'US Highway'
+      			EXPRESSION 'A20' # US Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the 
+							## bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'us_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'us_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+    
+      			STYLE  
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 9  
+        			COLOR 255 251 115 
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5 
+        			COLOR 255 251 115 
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A10
+#######
+
+    		CLASS
+      			NAME 'Interstate'
+      			EXPRESSION 'A10' # interstates
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 254 254 254
+        			MINDISTANCE 100
+        			MINFEATURESIZE 50
+        			OFFSET 0 0
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the
+							## bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'interstate1_wide_back'
+          				SIZE 18
+          				COLOR 254 254 254	## WHITE banner border
+        			END      
+        			STYLE
+          				SYMBOL 'interstate1_wide_back'
+          				SIZE 16
+          				COLOR 255 0 0		## RED banner
+        			END
+        			STYLE
+          				SYMBOL 'interstate1_wide_front'
+          				SIZE 18
+          				COLOR 254 254 254	## WHITE shield border
+        			END      
+        			STYLE
+          				SYMBOL 'interstate1_wide_front'
+          				SIZE 16
+          				COLOR 56 120 199	## BLUE(ish) shield color
+        			END      
+      			END
+
+
+      			STYLE  
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 9  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 5000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 5000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 7  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 25000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 25000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2 
+        			COLOR 249 222 77
+      			END
+
+    		END
+
+#######
+#	A63
+#######
+
+    		CLASS
+      			#NAME 'Access Ramp'
+      			EXPRESSION 'A63' # Access Ramp
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 4
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 10000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 10000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 249 222 77
+      			END
+    		END
+
+
+    		TEMPLATE 'TEMPLATES/stpaul_record.html'
+
+  		TOLERANCE 15
+  		TOLERANCEUNITS pixels
+ 
+  	END
+
+    
+END ## end Map###########################
+##  Road classifications
+###########################
+
+## Feature class codes (f_class) are generalized versions of the U.S. census bureau standards. Namely: 
+##    
+##   Interstates A10
+##   Interstate HOV lanes A15
+##   US highways A20 
+##   State highways A25
+##   County Roads A30
+##   City Streets A40
+##   Ramps and Loops A63
+##   Service Drives A64
+##   Private Roads A66
+##   Dormitory Walkways A71
+##   Restricted Access A98
+
+##                 
+
+
+MAP
+
+	EXTENT 332000 -18000 678000 328000
+
+
+  	STATUS ON
+
+	LEGEND
+		KEYSIZE 40 10
+	END
+
+	WEB
+		METADATA
+			'ows_title' 'STPGIS_CENTERLINES'
+			'ows_srs' 'EPSG:200068 EPSG:26915 EPSG:4326 EPSG:900913 EPSG:3857'
+			#'ows_extent' '540000 135000 600000 175000'
+			'ows_enable_request' '*'
+      			"gml_include_items" "all" ## Optional (serves all attributes for layer)
+			'wms_feature_info_mime_type' 'text/html'
+		END
+	END
+
+	#PROJECTION
+		#"init=epsg:200068"
+	#END
+
+#######################
+####  Linework 
+#######################
+
+	LAYER
+
+		#DEBUG 5
+
+    		NAME 'stpgis_centerlines'
+    		TYPE LINE
+		STATUS DEFAULT
+
+		#PROJECTION
+			#"init=epsg:200068"
+		#END
+
+		#METADATA
+			#'ows_title' 'STPGIS_CENTERLINES'
+			#'ows_srs' 'EPSG:200068 EPSG:26915 EPSG:4326 EPSG:900913 EPSG:3857'
+      			#"gml_include_items" "all" ## Optional (serves all attributes for layer)
+			#'ows_enable_request' '*'
+    			#"qstring_validation_pattern" "."
+		#END
+
+		CONNECTIONTYPE POSTGIS
+
+		INCLUDE "../../../../conf/spatial_db/connection_compass.inc"
+
+		DATA "wkb_geometry from (select 
+						objectid,
+						cmmsparent, -- used in TEMPLATE
+						-- cmmsid,
+						-- l_f_add,
+						-- r_f_add,
+						-- l_t_add,
+						-- r_t_add,
+						streetall, -- used in TEMPLATE
+						f_xstreet, -- used in TEMPLATE
+						t_xstreet, -- used in TEMPLATE
+						-- msa_route,
+						-- ownership,
+						-- maintained,
+						-- stp_class,
+						-- rowclass,
+						-- speed_lim,
+						-- length_ft,
+						-- base,
+						-- surface,
+						-- parking_mi,
+						-- lane_mi,
+						-- oneway,
+						-- cmmschgreq,
+						-- streetname,
+						-- type,
+						-- sufdir,
+						hwy_numb,
+						f_class,
+						-- cencty_l,
+						-- cenmun_l,
+						-- censt_r,
+						-- cencty_r,
+						-- cenmun_r,
+						-- gnis_l,
+						-- gnis_r,
+						-- fips5_l,
+						-- fips5_r,
+						-- zip5_l,
+						-- zip5_r,
+						-- alt_nam1,
+						-- alt_nam2,
+						-- created_user,
+						-- created_date,
+						-- last_edited_user,
+						-- last_edited_date,
+						wkb_geometry
+      			from stpgis.stpaul_streetcenterline) as subquery using unique objectid using srid=200068"
+
+
+    		CLASSITEM 'f_class'
+    		LABELITEM 'streetall'
+
+#######
+#	A64 A66 A71 A73 A74 A98
+#######
+
+    		CLASS
+			#NAME 'Other Roads'
+      			EXPRESSION /A64|A66|A71|A73|A74|A98/ 
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+      				WIDTH 2
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 5000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 5000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+      				WIDTH 1
+        			COLOR 254 254 254
+      			END
+    		END
+
+#######
+#	A40
+#######
+
+    		CLASS
+			NAME 'Local Roads'
+      			EXPRESSION 'A40' # Local Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 250 250 250
+       				COLOR 28 28 28
+       				MINDISTANCE 250
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      			END
+
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 10000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 10000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 15000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 15000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 1
+        			COLOR 254 254 254
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			WIDTH 2
+				COLOR 175 175 175
+      				MAXSCALEDENOM 25001
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 25002
+        			WIDTH 1
+				COLOR 200 200 200
+      				MAXSCALEDENOM 160000
+      			END
+    		END
+
+#######
+#	A30
+#######
+    
+    		CLASS
+      			NAME 'County Road'
+      			EXPRESSION 'A30' # State Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			#OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'
+        			STYLE
+          				SYMBOL 'state_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'state_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+
+      			LABEL	## Street name label
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 10
+       				OUTLINECOLOR 255 251 115  # Same as line work color
+       				COLOR 0 0 0
+       				MINDISTANCE 200
+       				MINFEATURESIZE 10
+       				PARTIALS FALSE
+      			END
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 6
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 3
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A25
+#######
+    		CLASS
+      			NAME 'MN Highway'
+      			EXPRESSION 'A25' # MN Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'mn_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'mn_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 10
+       				OUTLINECOLOR 255 251 115  # Same as line work color
+       				COLOR 0 0 0
+       				MINDISTANCE 300
+       				MINFEATURESIZE 10
+       				#OFFSET -1 0
+       				PARTIALS FALSE
+      			END
+
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 8
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 6
+        			COLOR 255 251 115
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 3
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A74
+#######
+
+    		CLASS
+      			#NAME 'Park Road'
+      			EXPRESSION 'A74' # Park Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 175 175 175
+       				OUTLINEWIDTH 1
+       				COLOR 28 28 28
+       				MINDISTANCE 75
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      				MAXSCALEDENOM 10000
+      			END
+    		END
+
+#######
+#	A66
+#######
+
+    		CLASS
+      			#NAME 'Private Road'
+      			EXPRESSION 'A66' # Private Road
+      			LABEL
+	 			TYPE TRUETYPE
+ 	 			FONT arial-bold
+	 			ANGLE FOLLOW
+       				SIZE 7
+       				OUTLINECOLOR 175 175 175
+       				OUTLINEWIDTH 1
+       				COLOR 28 28 28
+       				MINDISTANCE 75
+       				MINFEATURESIZE 50
+       				PARTIALS FALSE
+      				MAXSCALEDENOM 10000
+      			END
+    		END
+#######
+#	A20
+#######
+    
+    		CLASS
+      			NAME 'US Highway'
+      			EXPRESSION 'A20' # US Highway
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 0 0 0
+        			MINDISTANCE 200
+        			MINFEATURESIZE 15
+        			OFFSET 0 -1
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'us_highway_back'
+          				SIZE 20
+          				COLOR 254 254 254
+        			END
+        			STYLE
+          				SYMBOL 'us_highway_front'
+          				SIZE 20
+          				COLOR 0 0 0
+        			END
+      			END
+    
+      			STYLE  
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 9  
+        			COLOR 255 251 115 
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5 
+        			COLOR 255 251 115 
+      				MAXSCALEDENOM 20000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 20000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 255 251 115
+      			END
+    		END
+
+#######
+#	A10
+#######
+
+    		CLASS
+      			NAME 'Interstate'
+      			EXPRESSION 'A10' # interstates
+      			LABEL
+        			TYPE TRUETYPE
+        			FONT bluehigh
+        			SIZE 10
+        			COLOR 254 254 254
+        			MINDISTANCE 100
+        			MINFEATURESIZE 50
+        			OFFSET 0 0
+        			PARTIALS FALSE
+				TEXT '[hwy_numb]'  	## be careful here with the call, you need to quote the bracketed token !!
+							## Also, this is a multiple LABELITEM.
+        			STYLE
+          				SYMBOL 'interstate1_wide_back'
+          				SIZE 18
+          				COLOR 254 254 254	## WHITE banner border
+        			END      
+        			STYLE
+          				SYMBOL 'interstate1_wide_back'
+          				SIZE 16
+          				COLOR 255 0 0		## RED banner
+        			END
+        			STYLE
+          				SYMBOL 'interstate1_wide_front'
+          				SIZE 18
+          				COLOR 254 254 254	## WHITE shield border
+        			END      
+        			STYLE
+          				SYMBOL 'interstate1_wide_front'
+          				SIZE 16
+          				COLOR 56 120 199	## BLUE(ish) shield color
+        			END      
+      			END
+
+
+      			STYLE  
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 9  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 5000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 5000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 7  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 12000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 12000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 5  
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 25000
+      			END
+
+      			STYLE  
+      				MINSCALEDENOM 25000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2 
+        			COLOR 249 222 77
+      			END
+
+    		END
+
+#######
+#	A63
+#######
+
+    		CLASS
+      			#NAME 'Access Ramp'
+      			EXPRESSION 'A63' # Access Ramp
+      			STYLE
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 4
+        			COLOR 249 222 77
+      				MAXSCALEDENOM 10000
+      			END
+
+      			STYLE
+      				MINSCALEDENOM 10000
+        			OUTLINEWIDTH 1
+        			OUTLINECOLOR 175 175 175 
+        			WIDTH 2
+        			COLOR 249 222 77
+      			END
+    		END
+
+
+    		TEMPLATE 'TEMPLATES/stpaul_record.html'
+
+  		TOLERANCE 15
+  		TOLERANCEUNITS pixels
+ 
+  	END
+
+    
+END ## end Map
